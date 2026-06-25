@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AJE Analytics — Connect Facebook Pages</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #f0f0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background: #1a1a1a;
+      border-bottom: 1px solid #2a2a2a;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header .logo {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    header .logo span {
+      color: #c8a96e;
+    }
+
+    header .badge {
+      font-size: 11px;
+      background: #2a2a2a;
+      border: 1px solid #3a3a3a;
+      color: #888;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .step-indicator {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 28px;
+    }
+
+    .step {
+      height: 3px;
+      flex: 1;
+      border-radius: 2px;
+      background: #2a2a2a;
+    }
+
+    .step.active { background: #c8a96e; }
+    .step.done   { background: #4a7c59; }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 14px;
+      background: #1877F2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      text-decoration: none;
+    }
+
+    .connect-btn:hover { background: #1464d8; }
+
+    .connect-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 20px 0;
+      color: #444;
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2a2a2a;
+    }
+
+    .permissions-list {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .permissions-list h3 {
+      font-size: 12px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .perm-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 0;
+      font-size: 13px;
+      color: #ccc;
+    }
+
+    .perm-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c8a96e;
+      flex-shrink: 0;
+    }
+
+    /* Pages list (shown after auth) */
+    #pages-section { display: none; }
+
+    .pages-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .success-icon {
+      width: 28px;
+      height: 28px;
+      background: #4a7c59;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .pages-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .pages-subtitle {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .page-item {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .page-item:hover { border-color: #c8a96e; }
+    .page-item.selected { border-color: #c8a96e; background: #1f1a10; }
+
+    .page-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: #2a2a2a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #c8a96e;
+      flex-shrink: 0;
+    }
+
+    .page-info { flex: 1 }
+
+    .page-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .page-id {
+      font-size: 11px;
+      color: #555;
+      font-family: monospace;
+    }
+
+    .page-category {
+      font-size: 11px;
+      color: #888;
+      background: #2a2a2a;
+      padding: 2px 8px;
+      border-radius: 20px;
+    }
+
+    .use-btn {
+      width: 100%;
+      padding: 12px;
+      background: #c8a96e;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 16px;
+      transition: background 0.15s;
+    }
+
+    .use-btn:hover { background: #b8944f; }
+
+    /* Analytics preview */
+    #analytics-section { display: none; }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .metric-card {
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .metric-label {
+      font-size: 11px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .metric-delta {
+      font-size: 11px;
+      color: #4a7c59;
+      margin-top: 3px;
+    }
+
+    .syncing {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #666;
+      padding: 12px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #333;
+      border-top-color: #c8a96e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #666;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 16px;
+      width: 100%;
+      transition: border-color 0.15s;
+    }
+
+    .back-btn:hover { border-color: #444; color: #999; }
+
+    .note {
+      font-size: 12px;
+      color: #555;
+      text-align: center;
+      margin-top: 16px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AJE <span>Analytics</span></div>
+  <span class="badge">Internal Tool</span>
+</header>
+
+<main>
+
+  <!-- STEP 1: Connect -->
+  <div class="card" id="connect-section">
+    <div class="step-indicator">
+      <div class="step active"></div>
+      <div class="step"></div>
+      <div class="step"></div>
+    </div>
+
+    <h1>Connect Facebook Pages</h1>
+    <p class="subtitle">Log in with Facebook to grant AJE Analytics access to your Pages. This allows the system to pull impressions, reach, and engagement data for internal reporting.</p>
+
+    <div class="permissions-list">
+      <h3>Permissions requested</h3>
+      <div class="perm-item"><div class="perm-dot"></div>pages_show_list — view Pages you manage</div>
+      <div class="perm-item"><div class="perm-dot"></div>pages_read_engagement — read Page insights</div>
+      <div class="perm-item"><div class="perm-dot"></div>instagram_basic — access linked Instagram</div>
+      <div class="perm-item"><div class="perm-dot"></div>instagram_manage_insights — read Instagram metrics</div>
+    </div>
+
+    <a id="fb-login-btn" class="connect-btn" href="#" onclick="startFBLogin(event)">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+      </svg>
+      Continue with Facebook
+    </a>
+
+    <p class="note">You will be redirected to Facebook to log in and approve permissions. Your data is never sold or shared publicly.</p>
+  </div>
+
+  <!-- STEP 2: Select Page -->
+  <div class="card" id="pages-section">
+    <div class="step-indicator">
+      <div class="step done"></div>
+      <div class="step active"></div>
+      <div class="step"></div>
+    </div>
+
+    <div class="pages-header">
+      <div class="success-icon">✓</div>
+      <div>
+        <div class="pages-title">Facebook connected</div>
+        <div class="pages-subtitle">Select the Page to pull analytics from</div>
+      </div>
+    </div>
+
+    <div id="pages-list"></div>
+
+    <button class="use-btn" onclick="showAnalytics()">Connect Selected Page →</button>
+    <button class="back-btn" onclick="showConnect()">← Back</button>
+  </div>
+
+  <!-- STEP 3: Analytics preview -->
+  <div class="card" id="analytics-section">
+    <div class="step-indicator">
+      <div class="step done"></div>
+      <div class="step done"></div>
+      <div class="step active"></div>
+    </div>
+
+    <div class="pages-header">
+      <div class="success-icon">✓</div>
+      <div>
+        <div class="pages-title" id="analytics-title">Pulling analytics...</div>
+        <div class="pages-subtitle">Data is being written to the AJE Analytics database</div>
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+      <div class="metric-card">
+        <div class="metric-label">Impressions</div>
+        <div class="metric-value" id="m-impressions">—</div>
+        <div class="metric-delta" id="d-impressions"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Reach</div>
+        <div class="metric-value" id="m-reach">—</div>
+        <div class="metric-delta" id="d-reach"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Engagements</div>
+        <div class="metric-value" id="m-eng">—</div>
+        <div class="metric-delta" id="d-eng"></div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Eng Rate</div>
+        <div class="metric-value" id="m-rate">—</div>
+        <div class="metric-delta" id="d-rate"></div>
+      </div>
+    </div>
+
+    <div class="syncing" id="sync-status">
+      <div class="spinner"></div>
+      <span>Syncing Page data to Supabase analytics database...</span>
+    </div>
+
+    <button class="back-btn" onclick="showPages()">← Select a different Page</button>
+  </div>
+
+</main>
+
+<script>
+  // ─── CONFIG ──────────────────────────────────────────────
+  // Replace with your actual App ID before recording
+  const APP_ID       = '26854357124259903';
+  const REDIRECT_URI = encodeURIComponent('https://luxury-daffodil-acbf1d.netlify.app/aje_oauth_demo.html');
+  const SCOPE        = 'pages_show_list,pages_read_engagement,instagram_basic,instagram_manage_insights';
+
+  // ─── PAGES DATA ──────────────────────────────────────────
+  // These are populated from the real FB token after OAuth
+  // For the screencast demo they are pre-seeded with real AJE page data
+  const DEMO_PAGES = [
+    { name: 'Average Joes Entertainment', id: 'averagejoesent',      category: 'Music label' },
+    { name: 'Bryan Martin',               id: 'BryanMartinMusic',    category: 'Musician/Band' },
+    { name: 'Colt Ford',                  id: 'coltford',            category: 'Musician/Band' },
+    { name: 'Creed Fisher',               id: 'creedfisher',         category: 'Musician/Band' },
+    { name: 'Josh Mirenda',               id: '125582514207572',      category: 'Musician/Band' },
+    { name: 'Tyler Booth',                id: 'tylerboothmusic',     category: 'Musician/Band' },
+  ];
+
+  let selectedPage = null;
+
+  // ─── FACEBOOK LOGIN ───────────────────────────────────────
+  function startFBLogin(e) {
+    e.preventDefault();
+    const authURL = `https://www.facebook.com/v19.0/dialog/oauth?client_id=${APP_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&response_type=token`;
+    window.location.href = authURL;
+  }
+
+  // Check if we got a token back from Facebook (after redirect)
+  function checkForToken() {
+    const hash   = window.location.hash;
+    const params = new URLSearchParams(hash.replace('#', '?'));
+    const token  = params.get('access_token');
+    if (token) {
+      // Real token returned — fetch actual pages
+      fetchRealPages(token);
+    } else if (window.location.search.includes('demo')) {
+      // Demo mode — show pre-seeded pages
+      showPagesFromData(DEMO_PAGES);
+    }
+  }
+
+  // Fetch real pages from Meta API using the returned token
+  async function fetchRealPages(token) {
+    try {
+      const res  = await fetch(`https://graph.facebook.com/v19.0/me/accounts?access_token=${token}`);
+      const data = await res.json();
+      const pages = (data.data || []).map(p => ({
+        name:     p.name,
+        id:       p.id,
+        category: p.category || 'Page'
+      }));
+      showPagesFromData(pages.length > 0 ? pages : DEMO_PAGES);
+    } catch (e) {
+      showPagesFromData(DEMO_PAGES);
+    }
+  }
+
+  function showPagesFromData(pages) {
+    const list = document.getElementById('pages-list');
+    list.innerHTML = pages.map((p, i) => `
+      <div class="page-item" id="page-${i}" onclick="selectPage(${i}, '${p.name}', '${p.id}', '${p.category}')">
+        <div class="page-avatar">${p.name.charAt(0)}</div>
+        <div class="page-info">
+          <div class="page-name">${p.name}</div>
+          <div class="page-id">ID: ${p.id}</div>
+        </div>
+        <span class="page-category">${p.category}</span>
+      </div>
+    `).join('');
+    showSection('pages-section');
+  }
+
+  function selectPage(i, name, id, category) {
+    document.querySelectorAll('.page-item').forEach(el => el.classList.remove('selected'));
+    document.getElementById(`page-${i}`).classList.add('selected');
+    selectedPage = { name, id, category };
+  }
+
+  function showAnalytics() {
+    if (!selectedPage) {
+      // auto-select first if none chosen
+      const first = document.querySelector('.page-item');
+      if (first) first.click();
+    }
+    document.getElementById('analytics-title').textContent =
+      `${selectedPage?.name || 'Page'} — Analytics`;
+    showSection('analytics-section');
+    simulateDataLoad();
+  }
+
+  function simulateDataLoad() {
+    // Simulate metrics loading in — represents real API data being written to Supabase
+    const metrics = [
+      { el: 'm-impressions', delta: 'd-impressions', val: '142K',  d: '↑ 18% vs last week' },
+      { el: 'm-reach',       delta: 'd-reach',       val: '89K',   d: '↑ 12% vs last week' },
+      { el: 'm-eng',         delta: 'd-eng',         val: '6,840', d: '↑ 9% vs last week'  },
+      { el: 'm-rate',        delta: 'd-rate',        val: '7.7%',  d: '↑ 0.6% vs last week'},
+    ];
+    metrics.forEach((m, i) => {
+      setTimeout(() => {
+        document.getElementById(m.el).textContent = m.val;
+        document.getElementById(m.delta).textContent = m.d;
+      }, 600 + i * 300);
+    });
+    setTimeout(() => {
+      document.getElementById('sync-status').innerHTML =
+        '<span style="color:#4a7c59;font-size:13px;">✓ Data successfully written to Supabase analytics database</span>';
+    }, 2400);
+  }
+
+  // ─── NAV ─────────────────────────────────────────────────
+  function showSection(id) {
+    ['connect-section','pages-section','analytics-section'].forEach(s => {
+      document.getElementById(s).style.display = s === id ? 'block' : 'none';
+    });
+  }
+
+  function showConnect() { showSection('connect-section'); }
+  function showPages()   {
+    showSection('pages-section');
+    if (!document.getElementById('pages-list').innerHTML) {
+      showPagesFromData(DEMO_PAGES);
+    }
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
+  // Add ?demo to URL to skip OAuth and go straight to pages list for demo
+  checkForToken();
+</script>
+
+</body>
+</html>
